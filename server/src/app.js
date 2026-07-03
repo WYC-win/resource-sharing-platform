@@ -43,20 +43,26 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Simple visit counter - log each unique IP once per day
+// Visit counter - dedupe same IP within 60s window to avoid counting multi-API page loads
+const visitCache = new Map();
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
     try {
-      const today = new Date().toISOString().slice(0, 10);
-      const existing = queryOne(
-        "SELECT COUNT(*) as count FROM visit_logs WHERE ip_address = ? AND date(visited_at) = ?",
-        [req.ip, today]
-      );
-      if (!existing || existing.count === 0) {
+      const now = Date.now();
+      const lastVisit = visitCache.get(req.ip);
+      if (!lastVisit || now - lastVisit > 60000) {
+        visitCache.set(req.ip, now);
         execute(
           'INSERT INTO visit_logs (ip_address, user_agent) VALUES (?, ?)',
           [req.ip, req.headers['user-agent'] || '']
         );
+        // Clean up stale entries every 100 inserts
+        if (visitCache.size > 500) {
+          const cutoff = now - 60000;
+          for (const [ip, time] of visitCache) {
+            if (time < cutoff) visitCache.delete(ip);
+          }
+        }
       }
     } catch (e) { /* ignore visit logging errors */ }
   }

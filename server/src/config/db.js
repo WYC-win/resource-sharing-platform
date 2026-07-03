@@ -112,9 +112,12 @@ function initTables(database) {
   // Migration: add course_id column to existing resources table (if missing)
   try {
     database.run('ALTER TABLE resources ADD COLUMN course_id INTEGER REFERENCES courses(id)');
-  } catch (e) {
-    // Column already exists, ignore
-  }
+  } catch (e) {}
+
+  // Migration: add last_login_at column to users table (if missing)
+  try {
+    database.run("ALTER TABLE users ADD COLUMN last_login_at DATETIME");
+  } catch (e) {}
 
   // Indexes (must run after migrations so columns exist)
   const indexes = [

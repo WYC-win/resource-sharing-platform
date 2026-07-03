@@ -31,7 +31,7 @@ class User {
    */
   static findById(id) {
     return queryOne(
-      'SELECT id, username, display_name, role, status, created_at, updated_at FROM users WHERE id = ?',
+      'SELECT id, username, display_name, role, status, created_at, updated_at, last_login_at FROM users WHERE id = ?',
       [id]
     );
   }
@@ -64,7 +64,7 @@ class User {
 
     const offset = (page - 1) * pageSize;
     const users = queryAll(
-      `SELECT id, username, display_name, role, status, created_at, updated_at
+      `SELECT id, username, display_name, role, status, created_at, updated_at, last_login_at
        FROM users ${whereClause}
        ORDER BY created_at DESC
        LIMIT ? OFFSET ?`,

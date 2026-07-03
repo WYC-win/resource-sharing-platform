@@ -21,10 +21,12 @@ router.get('/overview', (req, res) => {
   const resourceStats = Resource.getStats();
   const todayDownloads = DownloadLog.getDownloadCount('today');
   const weekDownloads = DownloadLog.getDownloadCount('week');
+  const totalDownloads = DownloadLog.getDownloadCount('all');
 
   // Visit stats
   const totalVisits = queryOne('SELECT COUNT(*) as count FROM visit_logs');
-  const todayVisits = queryOne("SELECT COUNT(DISTINCT ip_address) as count FROM visit_logs WHERE date(visited_at) = date('now', 'localtime')");
+  const todayVisits = queryOne("SELECT COUNT(*) as count FROM visit_logs WHERE date(visited_at) = date('now', 'localtime')");
+  const todayVisitors = queryOne("SELECT COUNT(DISTINCT ip_address) as count FROM visit_logs WHERE date(visited_at) = date('now', 'localtime')");
 
   res.json({
     code: 200,
@@ -38,10 +40,12 @@ router.get('/overview', (req, res) => {
       downloads: {
         today: todayDownloads,
         week: weekDownloads,
+        total: totalDownloads,
       },
       visits: {
         total: totalVisits?.count || 0,
         today: todayVisits?.count || 0,
+        todayVisitors: todayVisitors?.count || 0,
       },
     },
   });

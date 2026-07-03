@@ -25,6 +25,11 @@
         </template>
       </el-table-column>
       <el-table-column prop="created_at" label="创建时间" width="170" />
+      <el-table-column label="最近登录" width="170">
+        <template #default="{ row }">
+          {{ row.last_login_at || '从未登录' }}
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <el-button text size="small" @click="handleResetPassword(row)">重置密码</el-button>

@@ -36,8 +36,17 @@
           <el-icon :size="24"><Download /></el-icon>
         </div>
         <div class="stat-info">
-          <h3>{{ stats.downloads?.today || 0 }} / {{ stats.downloads?.week || 0 }}</h3>
-          <p>今日 / 本周下载</p>
+          <h3>{{ stats.downloads?.today || 0 }} / {{ stats.downloads?.week || 0 }} / {{ stats.downloads?.total || 0 }}</h3>
+          <p>今日 / 本周 / 总下载</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#f0f5ff;color:#667eea">
+          <el-icon :size="24"><Opportunity /></el-icon>
+        </div>
+        <div class="stat-info">
+          <h3>{{ stats.visits?.todayVisitors || 0 }}</h3>
+          <p>今日访问人数</p>
         </div>
       </div>
       <div class="stat-card">

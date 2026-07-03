@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const authService = require('../services/authService');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
+const { execute } = require('../config/db');
 
 const router = express.Router();
 
@@ -68,6 +69,7 @@ router.post('/login', async (req, res, next) => {
     }
 
     clearRateLimit(key);
+    execute("UPDATE users SET last_login_at = datetime('now', 'localtime') WHERE id = ?", [result.user.id]);
 
     res.json({
       code: 200,
@@ -144,6 +146,7 @@ router.post('/student-login', (req, res, next) => {
     const { studentId } = req.body;
     const result = authService.studentLogin(studentId);
     clearRateLimit(key);
+    execute("UPDATE users SET last_login_at = datetime('now', 'localtime') WHERE id = ?", [result.user.id]);
     res.json({
       code: 200,
       message: '登录成功',
