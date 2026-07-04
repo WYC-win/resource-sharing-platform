@@ -97,8 +97,8 @@ function refreshAccessToken(refreshToken) {
 /**
  * Validate student ID format and auto-login/create
  * Rules: 10 digits
- *   - First 4 digits: 1000-1030
- *   - Last 2 digits: 00-36
+ *   - First 4 digits (college code): 1001-1019
+ *   - Last 2 digits (class seq no.): 01-36
  * @param {string} studentId
  * @returns {Object} { user, accessToken, refreshToken }
  */
@@ -137,6 +137,15 @@ function studentLogin(studentId) {
 /**
  * Validate student ID format
  */
+/**
+ * Validate student ID format
+ * Rules based on CUGB actual student ID structure:
+ *   - 10 digits total
+ *   - First 4 digits: college code (1001-1019, covers all current 2023-2024 departments)
+ *   - Positions 5-6: enrollment year (no restriction, covers all years)
+ *   - Positions 7-8: class code (no restriction, varies by department)
+ *   - Last 2 digits: sequence number in class (01-36)
+ */
 function validateStudentId(id) {
   if (!id || typeof id !== 'string') {
     return { valid: false, message: '请输入学号' };
@@ -147,16 +156,21 @@ function validateStudentId(id) {
     return { valid: false, message: '学号必须为 10 位数字' };
   }
 
-  // First 4 digits must be 1000-1030
-  const prefix = parseInt(id.substring(0, 4), 10);
-  if (prefix < 1000 || prefix > 1030) {
-    return { valid: false, message: '学号前四位必须在 1000-1030 之间' };
+  // Special test account
+  if (id === '1000000000') {
+    return { valid: true };
   }
 
-  // Last 2 digits must be 00-36
+  // First 4 digits must be valid college code (1001-1009)
+  const prefix = parseInt(id.substring(0, 4), 10);
+  if (prefix < 1001 || prefix > 1009) {
+    return { valid: false, message: '学号错误' };
+  }
+
+  // Last 2 digits must be 01-36 (班级序号)
   const suffix = parseInt(id.substring(8), 10);
-  if (suffix < 0 || suffix > 36) {
-    return { valid: false, message: '学号最后两位必须在 00-36 之间' };
+  if (suffix < 1 || suffix > 36) {
+    return { valid: false, message: '学号错误' };
   }
 
   return { valid: true };

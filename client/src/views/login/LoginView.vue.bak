@@ -2,9 +2,10 @@
   <div class="login-page">
     <div class="login-card">
       <div class="login-header">
-        <el-icon :size="40" color="#409eff"><Reading /></el-icon>
+        <img src="/cugb-badge.png" class="school-badge" alt="校徽" />
         <h2>📖 北地书阁</h2>
-        <p class="login-desc">学习资料分享站</p>
+        <p class="login-desc">中国地质大学（北京）学习资料分享站</p>
+        <p class="school-motto">艰苦朴素 &nbsp; 求真务实</p>
       </div>
 
       <!-- Tab switch: Student / Admin -->
@@ -198,16 +199,31 @@ async function handleAdminLogin() {
   margin-bottom: 24px;
 }
 
+.school-badge {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 12px;
+}
+
 .login-header h2 {
   font-size: 24px;
   color: #303133;
-  margin: 12px 0 6px 0;
+  margin: 0 0 6px 0;
 }
 
 .login-desc {
   color: #909399;
   font-size: 14px;
-  margin: 0;
+  margin: 0 0 6px 0;
+}
+
+.school-motto {
+  color: #2b6cb0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  margin: 8px 0 0 0;
+  font-family: "KaiTi", "STKaiti", serif;
 }
 
 .login-tabs {
@@ -228,10 +244,15 @@ async function handleAdminLogin() {
   font-size: 13px;
 }
 
+/* Mobile */
 @media (max-width: 480px) {
   .login-card {
     padding: 28px 20px;
     border-radius: 12px;
+  }
+  .school-badge {
+    width: 60px;
+    height: 60px;
   }
   .login-header h2 {
     font-size: 20px;
