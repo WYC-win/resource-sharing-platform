@@ -38,6 +38,30 @@
       </el-button>
     </div>
   </el-dialog>
+
+  <!-- Solicitation dialog -->
+  <el-dialog
+    v-model="showSolicit"
+    title="📋 资料征集"
+    width="460px"
+    :close-on-click-modal="false"
+    :show-close="false"
+  >
+    <div style="line-height:1.8;font-size:14px;color:#303133">
+      <p style="font-size:15px;font-weight:600;margin-bottom:12px">征集北戴河实习资料</p>
+      <p>有同学正在寻找 <strong>北戴河实习</strong> 相关的资料，如果你手上有以下内容，欢迎上传分享：</p>
+      <ul style="padding-left:20px;margin:10px 0">
+        <li>实习指导书</li>
+        <li>实习报告 / 模板</li>
+        <li>往年记录 / 笔记</li>
+        <li>相关图片或地图</li>
+      </ul>
+      <p style="margin-top:12px">上传方式：登录后点击右上角「上传资源」，课程选择「北戴河实习」，审核通过后即可帮助到需要的同学！</p>
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <el-button type="primary" @click="dismissSolicit">我知道了</el-button>
+    </div>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -55,6 +79,8 @@ const showDisclaimer = ref(false)
 const countdown = ref(5)
 let timer = null
 
+const showSolicit = ref(false)
+
 const layout = computed(() => {
   if (route.meta.layout === 'none') return 'div'
   if (route.meta.requiresAdmin || route.path.startsWith('/admin')) return AdminLayout
@@ -62,16 +88,9 @@ const layout = computed(() => {
 })
 
 function checkDisclaimer() {
-  if (!authStore.isLoggedIn || authStore.isAdmin) return
+  if (!authStore.isLoggedIn || authStore.isAdmin) return false
   const lastAccepted = authStore.user?.disclaimer_accepted_at
-  let shouldShow = false
   if (!lastAccepted) {
-    shouldShow = true // never accepted
-  } else {
-    const daysSince = (Date.now() - new Date(lastAccepted).getTime()) / 86400000
-    if (daysSince > 30) shouldShow = true // more than 30 days
-  }
-  if (shouldShow) {
     showDisclaimer.value = true
     countdown.value = 5
     if (timer) clearInterval(timer)
@@ -82,7 +101,37 @@ function checkDisclaimer() {
         timer = null
       }
     }, 1000)
+    return true // disclaimer showed, solicit will wait
   }
+  // Days since last acceptance
+  const daysSince = (Date.now() - new Date(lastAccepted).getTime()) / 86400000
+  if (daysSince > 30) {
+    showDisclaimer.value = true
+    countdown.value = 5
+    if (timer) clearInterval(timer)
+    timer = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) {
+        clearInterval(timer)
+        timer = null
+      }
+    }, 1000)
+    return true
+  }
+  // Disclaimer not needed, check solicit directly
+  setTimeout(() => checkSolicit(), 300)
+  return false
+}
+
+function checkSolicit() {
+  if (!authStore.isLoggedIn || authStore.isAdmin) return
+  if (localStorage.getItem('solicit_seen_beidaihe')) return
+  showSolicit.value = true
+}
+
+function dismissSolicit() {
+  showSolicit.value = false
+  localStorage.setItem('solicit_seen_beidaihe', 'true')
 }
 
 async function acceptDisclaimer() {
@@ -92,6 +141,8 @@ async function acceptDisclaimer() {
     await authApi.acceptDisclaimer()
     authStore.user.disclaimer_accepted_at = new Date().toISOString()
   } catch {}
+  // After disclaimer, show solicit
+  setTimeout(() => checkSolicit(), 300)
 }
 
 // Check after login navigation completes

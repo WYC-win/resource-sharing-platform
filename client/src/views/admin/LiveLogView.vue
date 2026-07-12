@@ -24,7 +24,7 @@
               <span class="log-type">({{ item.file_type }})</span>
             </template>
             <template v-else>
-              <span class="log-ip">{{ item.ip_address }}</span>
+              <span class="log-user">{{ item.visitor }}</span>
               访问了网站
             </template>
           </div>
@@ -147,7 +147,7 @@ onUnmounted(() => {
   line-height: 1.5;
 }
 
-.log-user, .log-ip {
+.log-user {
   font-weight: 600;
   color: #409eff;
 }

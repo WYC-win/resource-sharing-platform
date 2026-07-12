@@ -103,6 +103,7 @@ function initTables(database) {
 
     CREATE TABLE IF NOT EXISTS visit_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER REFERENCES users(id),
       ip_address VARCHAR(45),
       user_agent TEXT,
       visited_at DATETIME DEFAULT (datetime('now', 'localtime'))
@@ -122,6 +123,11 @@ function initTables(database) {
   // Migration: add disclaimer_accepted_at column to users table (if missing)
   try {
     database.run("ALTER TABLE users ADD COLUMN disclaimer_accepted_at DATETIME");
+  } catch (e) {}
+
+  // Migration: add user_id column to visit_logs table (if missing)
+  try {
+    database.run("ALTER TABLE visit_logs ADD COLUMN user_id INTEGER REFERENCES users(id)");
   } catch (e) {}
 
   // Indexes (must run after migrations so columns exist)

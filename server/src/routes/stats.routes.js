@@ -108,11 +108,13 @@ router.get('/live-log', (req, res) => {
     LIMIT ?
   `, [limit]);
 
-  // Recent visits
+  // Recent visits (with username when available)
   const visits = queryAll(`
-    SELECT 'visit' as type, ip_address, '' as title, '' as file_type,
+    SELECT 'visit' as type, COALESCE(u.username, vl.ip_address) as visitor,
+           '' as title, '' as file_type,
            vl.visited_at as time
     FROM visit_logs vl
+    LEFT JOIN users u ON vl.user_id = u.id
     ORDER BY vl.visited_at DESC
     LIMIT ?
   `, [limit]);

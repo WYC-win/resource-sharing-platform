@@ -92,7 +92,7 @@
     <div class="login-site-footer">
       <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">冀ICP备2026007969号-2</a>
       <span class="footer-divider-desktop">|</span>
-      <span>🐚 已运行 {{ runtime }}</span>
+      <span class="desktop-emoji">🐚 </span>已运行 {{ runtime }}
     </div>
   </div>
 </template>
@@ -309,6 +309,9 @@ async function handleAdminLogin() {
     align-items: center;
   }
   .footer-divider-desktop {
+    display: none;
+  }
+  .desktop-emoji {
     display: none;
   }
 }

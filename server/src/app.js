@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const config = require('./config/index');
 const { errorHandler } = require('./middleware/errorHandler');
 const { execute, queryOne } = require('./config/db');
@@ -52,9 +53,25 @@ app.use((req, res, next) => {
       const lastVisit = visitCache.get(req.ip);
       if (!lastVisit || now - lastVisit > 60000) {
         visitCache.set(req.ip, now);
+        // Try to get user_id from JWT token
+        let userId = null;
+        const authHeader = req.headers.authorization;
+        const queryToken = req.query && req.query.token;
+        const token = queryToken || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null);
+        if (token) {
+          try {
+            const decoded = jwt.verify(token, config.jwt.secret);
+            userId = decoded.userId;
+            // Skip admin and test account
+            if (decoded.role === 'admin' || decoded.username === '1000000000') {
+              next();
+              return;
+            }
+          } catch {}
+        }
         execute(
-          'INSERT INTO visit_logs (ip_address, user_agent) VALUES (?, ?)',
-          [req.ip, req.headers['user-agent'] || '']
+          'INSERT INTO visit_logs (user_id, ip_address, user_agent) VALUES (?, ?, ?)',
+          [userId, req.ip, req.headers['user-agent'] || '']
         );
         // Clean up stale entries every 100 inserts
         if (visitCache.size > 500) {
