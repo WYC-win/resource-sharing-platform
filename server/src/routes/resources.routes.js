@@ -429,6 +429,8 @@ function createThrottle(bytesPerSecond) {
   });
 }
 
+const downloadCache = new Map();
+
 /**
  * GET /api/v1/resources/:id/download
  * Download a resource
@@ -468,17 +470,22 @@ router.get('/:id/download', (req, res) => {
     return res.status(404).json({ code: 404, message: '文件不存在，可能已被删除', data: null });
   }
 
-  // Increment download count
-  Resource.incrementDownloadCount(id);
+  // Dedup: same user downloading same resource within 5s counts once
+  // (fixes WeChat/Huawei double-request issue)
+  const dedupKey = `${req.user.id}_${id}`;
+  const now = Date.now();
+  const lastDownload = downloadCache.get(dedupKey);
+  if (!lastDownload || now - lastDownload > 5000) {
+    downloadCache.set(dedupKey, now);
+    Resource.incrementDownloadCount(id);
+    DownloadLog.create({
+      resource_id: id,
+      user_id: req.user.id,
+      ip_address: req.ip,
+    });
+  }
 
-  // Log download
-  DownloadLog.create({
-    resource_id: id,
-    user_id: req.user.id,
-    ip_address: req.ip,
-  });
-
-  // Send file with speed throttle (5MB/s per connection)
+  // Send file with speed throttle (600KB/s per connection)
   const dlName = resource.title + '.' + (resource.file_type || 'pdf');
   const encodedName = encodeURIComponent(dlName);
   res.setHeader('Content-Disposition', `attachment; filename="${encodedName}"; filename*=UTF-8''${encodedName}`);

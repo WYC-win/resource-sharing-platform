@@ -1,6 +1,10 @@
 <template>
   <component :is="layout">
-    <router-view />
+    <router-view v-slot="{ Component }">
+      <transition name="fade" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
   </component>
 
   <!-- Disclaimer dialog for first-time visitors -->
@@ -42,6 +46,7 @@ import { useRoute } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import { useAuthStore } from '@/stores/authStore'
+import * as authApi from '@/api/authApi'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -57,8 +62,16 @@ const layout = computed(() => {
 })
 
 function checkDisclaimer() {
-  const accepted = localStorage.getItem('disclaimerAccepted')
-  if (!accepted && authStore.isLoggedIn && !authStore.isAdmin) {
+  if (!authStore.isLoggedIn || authStore.isAdmin) return
+  const lastAccepted = authStore.user?.disclaimer_accepted_at
+  let shouldShow = false
+  if (!lastAccepted) {
+    shouldShow = true // never accepted
+  } else {
+    const daysSince = (Date.now() - new Date(lastAccepted).getTime()) / 86400000
+    if (daysSince > 30) shouldShow = true // more than 30 days
+  }
+  if (shouldShow) {
     showDisclaimer.value = true
     countdown.value = 5
     if (timer) clearInterval(timer)
@@ -72,10 +85,13 @@ function checkDisclaimer() {
   }
 }
 
-function acceptDisclaimer() {
-  localStorage.setItem('disclaimerAccepted', 'true')
+async function acceptDisclaimer() {
   showDisclaimer.value = false
   if (timer) { clearInterval(timer); timer = null; }
+  try {
+    await authApi.acceptDisclaimer()
+    authStore.user.disclaimer_accepted_at = new Date().toISOString()
+  } catch {}
 }
 
 // Check after login navigation completes

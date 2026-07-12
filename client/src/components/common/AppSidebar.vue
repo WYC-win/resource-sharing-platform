@@ -40,6 +40,11 @@
         <span>课程管理</span>
       </el-menu-item>
 
+      <el-menu-item index="/admin/logs">
+        <el-icon><Timer /></el-icon>
+        <span>实时日志</span>
+      </el-menu-item>
+
       <div class="sidebar-divider" />
 
       <el-menu-item index="/resources">

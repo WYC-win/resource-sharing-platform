@@ -119,6 +119,11 @@ function initTables(database) {
     database.run("ALTER TABLE users ADD COLUMN last_login_at DATETIME");
   } catch (e) {}
 
+  // Migration: add disclaimer_accepted_at column to users table (if missing)
+  try {
+    database.run("ALTER TABLE users ADD COLUMN disclaimer_accepted_at DATETIME");
+  } catch (e) {}
+
   // Indexes (must run after migrations so columns exist)
   const indexes = [
     'CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)',

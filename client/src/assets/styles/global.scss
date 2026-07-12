@@ -14,6 +14,68 @@
   --el-color-primary-dark-2: #1a4f8a;
 }
 
+/* ===================== */
+/* Transition & Animation  */
+/* ===================== */
+
+/* Smooth page transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Smooth scroll on main container */
+html, body, #app {
+  scroll-behavior: smooth;
+}
+
+/* Card hover animation */
+.course-card,
+.resource-card {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Button and interactive element transitions */
+.el-button {
+  transition: all 0.15s ease !important;
+}
+
+/* Table row hover smoothness */
+.el-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Menu item transitions */
+.el-menu-item {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Dialog entrance */
+.el-dialog {
+  animation: dialog-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Page load skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
 html, body, #app {
   height: 100%;
   font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',

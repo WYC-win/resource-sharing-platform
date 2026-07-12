@@ -4,7 +4,7 @@ const adminOnly = require('../middleware/adminOnly');
 const User = require('../models/User');
 const Resource = require('../models/Resource');
 const DownloadLog = require('../models/DownloadLog');
-const { queryOne } = require('../config/db');
+const { queryOne, queryAll } = require('../config/db');
 const { formatFileSize } = require('../utils/fileHelper');
 
 const router = express.Router();
@@ -88,6 +88,41 @@ router.get('/recent', (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
   const data = Resource.getRecent(limit);
   res.json({ code: 200, message: 'success', data });
+});
+
+/**
+ * GET /api/v1/stats/live-log
+ * Live activity log - recent downloads and visits
+ */
+router.get('/live-log', (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit, 10) || 30, 100);
+
+  // Recent downloads with user and resource info
+  const downloads = queryAll(`
+    SELECT 'download' as type, u.username, r.title, r.file_type,
+           dl.downloaded_at as time
+    FROM download_logs dl
+    JOIN users u ON dl.user_id = u.id
+    JOIN resources r ON dl.resource_id = r.id
+    ORDER BY dl.downloaded_at DESC
+    LIMIT ?
+  `, [limit]);
+
+  // Recent visits
+  const visits = queryAll(`
+    SELECT 'visit' as type, ip_address, '' as title, '' as file_type,
+           vl.visited_at as time
+    FROM visit_logs vl
+    ORDER BY vl.visited_at DESC
+    LIMIT ?
+  `, [limit]);
+
+  // Merge and sort by time DESC
+  const merged = [...downloads, ...visits]
+    .sort((a, b) => b.time.localeCompare(a.time))
+    .slice(0, limit);
+
+  res.json({ code: 200, message: 'success', data: merged });
 });
 
 module.exports = router;

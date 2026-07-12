@@ -102,6 +102,15 @@ router.get('/profile', auth, (req, res) => {
 });
 
 /**
+ * POST /api/v1/auth/disclaimer
+ * Record that the user has accepted the disclaimer
+ */
+router.post('/disclaimer', auth, (req, res) => {
+  execute("UPDATE users SET disclaimer_accepted_at = datetime('now', 'localtime') WHERE id = ?", [req.user.id]);
+  res.json({ code: 200, message: 'success', data: null });
+});
+
+/**
  * POST /api/v1/auth/refresh
  * Refresh access token
  */

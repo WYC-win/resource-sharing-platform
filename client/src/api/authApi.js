@@ -19,3 +19,7 @@ export function refreshToken(refreshToken) {
 export function changePassword(data) {
   return request.put('/auth/password', data)
 }
+
+export function acceptDisclaimer() {
+  return request.post('/auth/disclaimer')
+}

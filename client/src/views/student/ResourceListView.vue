@@ -133,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getResources } from '@/api/resourceApi'
 import { getCourses } from '@/api/courseApi'
@@ -235,15 +235,28 @@ onMounted(async () => {
 })
 
 // Watch for course_id changes in the URL
-watch(() => route.query.course_id, (newVal) => {
+watch(() => route.query.course_id, async (newVal) => {
   if (newVal) {
-    // Reset search and pagination when entering a new course
+    // Reset search and pagination
     resourceSearch.value = ''
     categoryId.value = ''
     page.value = 1
-    loadResources()
+    // Scroll to top immediately (before content loads)
+    scrollToTop()
+    // Load resources
+    await loadResources()
+    // Wait for Vue to update the DOM with new resources
+    await nextTick()
+    scrollToTop()
+    // Double tick for any delayed layout shifts
+    await nextTick()
+    scrollToTop()
   }
 })
+
+function scrollToTop() {
+  document.getElementById('app').scrollTop = 0
+}
 </script>
 
 <style scoped>

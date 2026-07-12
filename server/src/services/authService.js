@@ -161,9 +161,9 @@ function validateStudentId(id) {
     return { valid: true };
   }
 
-  // First 4 digits must be valid college code (1001-1009)
+  // First 4 digits must be valid college code (1001-1019)
   const prefix = parseInt(id.substring(0, 4), 10);
-  if (prefix < 1001 || prefix > 1009) {
+  if (prefix < 1001 || prefix > 1019) {
     return { valid: false, message: '学号错误' };
   }
 

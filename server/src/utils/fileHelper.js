@@ -35,6 +35,7 @@ function getFileType(ext) {
     '.docx': 'docx',
     '.ppt': 'ppt',
     '.pptx': 'pptx',
+    '.pps': 'pps',
     '.xls': 'xls',
     '.xlsx': 'xlsx',
   };
@@ -53,6 +54,7 @@ function getFileTypeLabel(ext) {
     '.docx': 'Word 文档',
     '.ppt': 'PPT 演示',
     '.pptx': 'PPT 演示',
+    '.pps': 'PPT 放映',
     '.xls': 'Excel 表格',
     '.xlsx': 'Excel 表格',
   };

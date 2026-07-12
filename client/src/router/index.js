@@ -73,6 +73,12 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true, title: '课程管理' },
   },
   {
+    path: '/admin/logs',
+    name: 'AdminLogs',
+    component: () => import('@/views/admin/LiveLogView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true, title: '实时日志' },
+  },
+  {
     path: '/admin/mobile',
     name: 'AdminMobile',
     component: () => import('@/views/admin/MobileAdminView.vue'),

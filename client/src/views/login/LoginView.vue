@@ -2,9 +2,10 @@
   <div class="login-page">
     <div class="login-card">
       <div class="login-header">
-        <el-icon :size="40" color="#409eff"><Reading /></el-icon>
+        <img src="/cugb-badge.png" class="school-badge" alt="校徽" />
         <h2>📖 北地书阁</h2>
-        <p class="login-desc">学习资料分享站</p>
+        <p class="login-desc">中国地质大学（北京）学习资料分享站</p>
+        <p class="school-motto">艰苦朴素 &nbsp; 求真务实</p>
       </div>
 
       <!-- Tab switch: Student / Admin -->
@@ -16,6 +17,7 @@
             :rules="studentRules"
             label-width="0"
             size="large"
+            @submit.prevent
             @keyup.enter="handleStudentLogin"
           >
             <el-form-item prop="studentId">
@@ -30,6 +32,7 @@
             <el-form-item>
               <el-button
                 type="primary"
+                native-type="button"
                 :loading="loading"
                 class="login-btn"
                 @click="handleStudentLogin"
@@ -47,6 +50,7 @@
             :rules="adminRules"
             label-width="0"
             size="large"
+            @submit.prevent
             @keyup.enter="handleAdminLogin"
           >
             <el-form-item prop="username">
@@ -85,11 +89,16 @@
         <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
       </div>
     </div>
+    <div class="login-site-footer">
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">冀ICP备2026007969号-2</a>
+      <span class="footer-divider-desktop">|</span>
+      <span>🐚 已运行 {{ runtime }}</span>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { ElMessage } from 'element-plus'
@@ -103,6 +112,20 @@ const studentFormRef = ref(null)
 const adminFormRef = ref(null)
 const loading = ref(false)
 const errorMsg = ref('')
+
+const startDate = new Date('2026-07-10T00:00:00')
+const now = ref(Date.now())
+let timer = null
+const runtime = computed(() => {
+  const diff = Math.floor((now.value - startDate.getTime()) / 1000)
+  const days = Math.floor(diff / 86400)
+  const hours = Math.floor((diff % 86400) / 3600)
+  const minutes = Math.floor((diff % 3600) / 60)
+  const seconds = diff % 60
+  return `${days} 天 ${hours} 小时 ${minutes} 分 ${seconds} 秒`
+})
+onMounted(() => { timer = setInterval(() => { now.value = Date.now() }, 1000) })
+onUnmounted(() => { if (timer) clearInterval(timer) })
 
 // --- Student form ---
 const studentForm = reactive({
@@ -198,16 +221,31 @@ async function handleAdminLogin() {
   margin-bottom: 24px;
 }
 
+.school-badge {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 12px;
+}
+
 .login-header h2 {
   font-size: 24px;
   color: #303133;
-  margin: 12px 0 6px 0;
+  margin: 0 0 6px 0;
 }
 
 .login-desc {
   color: #909399;
   font-size: 14px;
-  margin: 0;
+  margin: 0 0 6px 0;
+}
+
+.school-motto {
+  color: #2b6cb0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  margin: 8px 0 0 0;
+  font-family: "KaiTi", "STKaiti", serif;
 }
 
 .login-tabs {
@@ -228,13 +266,50 @@ async function handleAdminLogin() {
   font-size: 13px;
 }
 
+.login-site-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 12px 20px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+}
+.login-site-footer a {
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+}
+.login-site-footer a:hover {
+  color: rgba(255,255,255,0.9);
+}
+.footer-divider-desktop {
+  margin: 0 10px;
+  color: rgba(255,255,255,0.4);
+}
+
+/* Mobile */
 @media (max-width: 480px) {
   .login-card {
     padding: 28px 20px;
     border-radius: 12px;
   }
+  .school-badge {
+    width: 60px;
+    height: 60px;
+  }
   .login-header h2 {
     font-size: 20px;
+  }
+  .login-site-footer {
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: center;
+  }
+  .footer-divider-desktop {
+    display: none;
   }
 }
 </style>
