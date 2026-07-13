@@ -1,0 +1,27 @@
+{
+  "pages": [
+    {"path": "pages/index/index", "style": {"navigationBarTitleText": "北地书阁"}},
+    {"path": "pages/courses/courses", "style": {"navigationBarTitleText": "课程目录"}},
+    {"path": "pages/resources/resources", "style": {"navigationBarTitleText": "资源列表"}},
+    {"path": "pages/resource-detail/resource-detail", "style": {"navigationBarTitleText": "资源详情"}},
+    {"path": "pages/upload/upload", "style": {"navigationBarTitleText": "上传资料"}},
+    {"path": "pages/my-uploads/my-uploads", "style": {"navigationBarTitleText": "我的上传"}}
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "北地书阁",
+    "navigationBarBackgroundColor": "#2b6cb0",
+    "backgroundColor": "#f5f7fa"
+  },
+  "tabBar": {
+    "color": "#909399",
+    "selectedColor": "#2b6cb0",
+    "borderStyle": "white",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {"pagePath": "pages/courses/courses", "text": "课程", "iconPath": "static/courses.png", "selectedIconPath": "static/courses-active.png"},
+      {"pagePath": "pages/upload/upload", "text": "上传", "iconPath": "static/upload.png", "selectedIconPath": "static/upload-active.png"},
+      {"pagePath": "pages/my-uploads/my-uploads", "text": "我的", "iconPath": "static/my.png", "selectedIconPath": "static/my-active.png"}
+    ]
+  }
+}

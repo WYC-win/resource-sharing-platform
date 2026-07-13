@@ -471,18 +471,20 @@ router.get('/:id/download', (req, res) => {
   }
 
   // Dedup: same user downloading same resource within 5s counts once
-  // (fixes WeChat/Huawei double-request issue)
-  const dedupKey = `${req.user.id}_${id}`;
-  const now = Date.now();
-  const lastDownload = downloadCache.get(dedupKey);
-  if (!lastDownload || now - lastDownload > 5000) {
-    downloadCache.set(dedupKey, now);
-    Resource.incrementDownloadCount(id);
-    DownloadLog.create({
-      resource_id: id,
-      user_id: req.user.id,
-      ip_address: req.ip,
-    });
+  // Skip counting for admin (id=1) and test account (id=12)
+  if (req.user.id !== 1 && req.user.id !== 12) {
+    const dedupKey = `${req.user.id}_${id}`;
+    const now = Date.now();
+    const lastDownload = downloadCache.get(dedupKey);
+    if (!lastDownload || now - lastDownload > 5000) {
+      downloadCache.set(dedupKey, now);
+      Resource.incrementDownloadCount(id);
+      DownloadLog.create({
+        resource_id: id,
+        user_id: req.user.id,
+        ip_address: req.ip,
+      });
+    }
   }
 
   // Send file with speed throttle (600KB/s per connection)
@@ -495,7 +497,7 @@ router.get('/:id/download', (req, res) => {
   res.setHeader('Content-Type', resource.mime_type || 'application/octet-stream');
 
   const readStream = fs.createReadStream(filePath);
-  const throttle = createThrottle(600 * 1024); // 600KB/s
+  const throttle = createThrottle(4 * 1024 * 1024); // 4MB/s
   readStream.pipe(throttle).pipe(res);
 });
 
