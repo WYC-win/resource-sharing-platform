@@ -8,7 +8,7 @@
   "app-plus": {},
   "quickapp": {},
   "mp-weixin": {
-    "appid": "YOUR_APPID",
+    "appid": "此处填写你的AppID",
     "setting": {
       "urlCheck": false,
       "es6": true,
