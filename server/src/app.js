@@ -15,6 +15,7 @@ const categoryRoutes = require('./routes/categories.routes');
 const resourceRoutes = require('./routes/resources.routes');
 const statsRoutes = require('./routes/stats.routes');
 const courseRoutes = require('./routes/courses.routes');
+const announcementRoutes = require('./routes/announcements.routes');
 
 const app = express();
 
@@ -93,6 +94,7 @@ app.use('/api/v1/categories', categoryRoutes);
 app.use('/api/v1/resources', resourceRoutes);
 app.use('/api/v1/stats', statsRoutes);
 app.use('/api/v1/courses', courseRoutes);
+app.use('/api/v1/announcements', announcementRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

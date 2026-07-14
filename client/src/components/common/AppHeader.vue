@@ -12,6 +12,11 @@
 
       <div class="header-right">
         <template v-if="authStore.isLoggedIn">
+          <!-- Announcement button -->
+          <el-badge :is-dot="hasNewAnnouncement" style="line-height:1">
+            <el-button text :icon="'Bell'" @click="showAnnouncements" style="font-size:18px;padding:6px" />
+          </el-badge>
+
           <el-dropdown trigger="click" @command="handleCommand">
             <span class="user-info">
               <el-avatar :size="32" style="background:transparent;font-size:20px">📚</el-avatar>
@@ -38,18 +43,92 @@
         </template>
       </div>
     </div>
+
+    <!-- Announcement dialog -->
+    <el-dialog v-model="announceVisible" title="📢 平台公告" width="520px" @closed="onAnnounceClosed">
+      <div v-if="announceLoading" style="text-align:center;padding:40px;color:#909399">加载中...</div>
+      <div v-else-if="announceList.length === 0" style="text-align:center;padding:40px;color:#909399">暂无公告</div>
+      <div v-else class="announce-list">
+        <div
+          v-for="item in announceList"
+          :key="item.id"
+          class="announce-item"
+          :class="{ pinned: item.is_pinned }"
+        >
+          <div class="announce-item-header">
+            <span class="announce-item-title">
+              <el-tag v-if="item.is_pinned" size="small" type="warning" style="margin-right:6px">置顶</el-tag>
+              {{ item.title }}
+            </span>
+            <span class="announce-item-date">{{ item.published_at }}</span>
+          </div>
+          <div class="announce-item-content">{{ item.content }}</div>
+        </div>
+      </div>
+    </el-dialog>
   </el-header>
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { ElMessageBox } from 'element-plus'
+import { getAnnouncements } from '@/api/announcementApi'
 
 defineEmits(['toggle-sidebar'])
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+const announceVisible = ref(false)
+const announceLoading = ref(false)
+const announceList = ref([])
+const hasNewAnnouncement = ref(false)
+
+const LAST_VIEWED_KEY = 'announce_last_viewed'
+
+async function checkNewAnnouncements() {
+  try {
+    const res = await getAnnouncements()
+    const list = res.data || []
+    if (list.length === 0) {
+      hasNewAnnouncement.value = false
+      return
+    }
+    const lastViewed = localStorage.getItem(LAST_VIEWED_KEY)
+    if (!lastViewed) {
+      hasNewAnnouncement.value = true
+      return
+    }
+    // Check if any announcement is newer than last viewed
+    hasNewAnnouncement.value = list.some(a => {
+      if (!a.published_at) return false
+      return new Date(a.published_at).getTime() > parseInt(lastViewed, 10)
+    })
+  } catch {
+    hasNewAnnouncement.value = false
+  }
+}
+
+async function showAnnouncements() {
+  announceVisible.value = true
+  announceLoading.value = true
+  try {
+    const res = await getAnnouncements()
+    announceList.value = res.data || []
+  } catch {
+    announceList.value = []
+  } finally {
+    announceLoading.value = false
+  }
+}
+
+function onAnnounceClosed() {
+  // Record the current time as last viewed
+  localStorage.setItem(LAST_VIEWED_KEY, Date.now().toString())
+  hasNewAnnouncement.value = false
+}
 
 function handleCommand(command) {
   switch (command) {
@@ -73,6 +152,12 @@ function handleCommand(command) {
       break
   }
 }
+
+onMounted(() => {
+  if (authStore.isLoggedIn) {
+    checkNewAnnouncements()
+  }
+})
 </script>
 
 <style scoped>
@@ -136,6 +221,54 @@ function handleCommand(command) {
 
 .user-info:hover {
   background: #f5f7fa;
+}
+
+.announce-list {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.announce-item {
+  padding: 14px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.announce-item:last-child {
+  border-bottom: none;
+}
+
+.announce-item.pinned {
+  background: #fffbf0;
+  margin: 0 -16px;
+  padding: 14px 16px;
+  border-radius: 4px;
+}
+
+.announce-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.announce-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.announce-item-date {
+  font-size: 12px;
+  color: #909399;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.announce-item-content {
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.7;
+  white-space: pre-wrap;
 }
 
 .username {

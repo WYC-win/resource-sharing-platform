@@ -40,6 +40,11 @@
         <span>课程管理</span>
       </el-menu-item>
 
+      <el-menu-item index="/admin/announcements">
+        <el-icon><WarningFilled /></el-icon>
+        <span>公告管理</span>
+      </el-menu-item>
+
       <el-menu-item index="/admin/logs">
         <el-icon><Timer /></el-icon>
         <span>实时日志</span>

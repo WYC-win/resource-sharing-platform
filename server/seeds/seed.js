@@ -58,6 +58,23 @@ async function seed() {
     console.log('');
   }
 
+  // Seed default announcement
+  const announcementCount = queryOne('SELECT COUNT(*) as count FROM announcements').count;
+  if (announcementCount > 0) {
+    console.log('⚠️  Announcements already exist, skipping announcement seed.\n');
+  } else {
+    console.log('📋 Creating default announcement...');
+    const admin = queryOne("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
+    if (admin) {
+      execute(
+        `INSERT INTO announcements (title, content, status, is_pinned, created_by, published_at)
+         VALUES (?, ?, 'published', 1, ?, datetime('now', 'localtime'))`,
+        ['欢迎使用北地书阁', '这里是北地书阁 —— 中国地质大学（北京）的学习资源共享平台。\n\n请同学们遵守使用规范，仅用于校内学习交流。如有问题请联系管理员。', admin.id]
+      );
+      console.log('   ✅ Created welcome announcement.\n');
+    }
+  }
+
   console.log('✅ Seed completed successfully!');
 }
 

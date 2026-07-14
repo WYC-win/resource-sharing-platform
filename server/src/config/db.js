@@ -110,6 +110,20 @@ function initTables(database) {
     );
   `);
 
+  database.run(`
+    CREATE TABLE IF NOT EXISTS announcements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title VARCHAR(200) NOT NULL,
+      content TEXT NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK(status IN ('draft', 'published')),
+      is_pinned INTEGER NOT NULL DEFAULT 0,
+      created_by INTEGER REFERENCES users(id),
+      published_at DATETIME,
+      created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+      updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
+    );
+  `);
+
   // Migration: add course_id column to existing resources table (if missing)
   try {
     database.run('ALTER TABLE resources ADD COLUMN course_id INTEGER REFERENCES courses(id)');
@@ -141,6 +155,8 @@ function initTables(database) {
     'CREATE INDEX IF NOT EXISTS idx_download_logs_resource ON download_logs(resource_id)',
     'CREATE INDEX IF NOT EXISTS idx_download_logs_user ON download_logs(user_id)',
     'CREATE INDEX IF NOT EXISTS idx_visit_logs_date ON visit_logs(visited_at)',
+    'CREATE INDEX IF NOT EXISTS idx_announcements_status ON announcements(status)',
+    'CREATE INDEX IF NOT EXISTS idx_announcements_published ON announcements(published_at)',
   ];
   for (const idx of indexes) {
     database.run(idx);
