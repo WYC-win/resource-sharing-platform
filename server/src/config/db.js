@@ -144,6 +144,11 @@ function initTables(database) {
     database.run("ALTER TABLE visit_logs ADD COLUMN user_id INTEGER REFERENCES users(id)");
   } catch (e) {}
 
+  // Migration: add is_visible column to resources table (for unpublish feature)
+  try {
+    database.run("ALTER TABLE resources ADD COLUMN is_visible INTEGER NOT NULL DEFAULT 1");
+  } catch (e) {}
+
   // Indexes (must run after migrations so columns exist)
   const indexes = [
     'CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)',

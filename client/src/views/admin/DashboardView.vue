@@ -32,6 +32,15 @@
         </div>
       </div>
       <div class="stat-card">
+        <div class="stat-icon" style="background:#f5f7fa;color:#909399">
+          <el-icon :size="24"><Remove /></el-icon>
+        </div>
+        <div class="stat-info">
+          <h3>{{ stats.resources?.hidden || 0 }}</h3>
+          <p>已下架</p>
+        </div>
+      </div>
+      <div class="stat-card">
         <div class="stat-icon" style="background:#fef0f0;color:#f56c6c">
           <el-icon :size="24"><Download /></el-icon>
         </div>

@@ -287,6 +287,46 @@ router.post('/:id/review', auth, adminOnly, async (req, res) => {
 });
 
 /**
+ * PUT /api/v1/resources/:id/unpublish
+ * Unpublish an approved resource (hide from students)
+ */
+router.put('/:id/unpublish', auth, adminOnly, (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const resource = Resource.findById(id);
+
+  if (!resource) {
+    return res.status(404).json({ code: 404, message: '资源不存在', data: null });
+  }
+
+  if (resource.status !== 'approved') {
+    return res.status(400).json({ code: 400, message: '仅已通过的资源可以下架', data: null });
+  }
+
+  const updated = Resource.unpublish(id);
+  res.json({ code: 200, message: '已下架', data: updated });
+});
+
+/**
+ * PUT /api/v1/resources/:id/republish
+ * Republish a previously unpublished resource
+ */
+router.put('/:id/republish', auth, adminOnly, (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const resource = Resource.findById(id);
+
+  if (!resource) {
+    return res.status(404).json({ code: 404, message: '资源不存在', data: null });
+  }
+
+  if (resource.is_visible !== 0) {
+    return res.status(400).json({ code: 400, message: '该资源未下架，无需重新上架', data: null });
+  }
+
+  const updated = Resource.republish(id);
+  res.json({ code: 200, message: '已重新上架', data: updated });
+});
+
+/**
  * GET /api/v1/resources/:id/preview
  * Preview a resource (PDF inline, Office via Microsoft Online Viewer)
  */

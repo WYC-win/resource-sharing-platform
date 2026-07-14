@@ -34,3 +34,11 @@ export function deleteResource(id) {
 export function updateResource(id, data) {
   return request.put(`/resources/${id}`, data)
 }
+
+export function unpublishResource(id) {
+  return request.put(`/resources/${id}/unpublish`)
+}
+
+export function republishResource(id) {
+  return request.put(`/resources/${id}/republish`)
+}

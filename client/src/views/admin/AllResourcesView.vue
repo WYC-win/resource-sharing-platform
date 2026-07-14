@@ -28,14 +28,24 @@
         <template #default="{ row }">{{ row.file_type?.toUpperCase() }}</template>
       </el-table-column>
       <el-table-column prop="sizeLabel" label="大小" width="80" />
-      <el-table-column prop="status" label="状态" width="70">
+      <el-table-column label="状态" width="80">
         <template #default="{ row }">
-          <el-tag :type="statusType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
+          <el-tag :type="visibleType(row)" size="small">{{ visibleLabel(row) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="160" fixed="right" @click.stop>
+      <el-table-column label="操作" width="230" fixed="right" @click.stop>
         <template #default="{ row }">
           <el-button text size="small" @click.stop="openEdit(row)">编辑</el-button>
+          <el-button
+            v-if="row.status === 'approved' && row.is_visible !== 0"
+            text type="warning" size="small"
+            @click.stop="handleUnpublish(row)"
+          >下架</el-button>
+          <el-button
+            v-if="row.is_visible === 0"
+            text type="success" size="small"
+            @click.stop="handleRepublish(row)"
+          >上架</el-button>
           <el-popconfirm title="确定删除？" @confirm="handleDelete(row)">
             <template #reference>
               <el-button text type="danger" size="small">删除</el-button>
@@ -89,7 +99,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getAdminResources, deleteResource, updateResource } from '@/api/resourceApi'
+import { getAdminResources, deleteResource, updateResource, unpublishResource, republishResource } from '@/api/resourceApi'
 import { getCategories } from '@/api/categoryApi'
 import { getAllCourses } from '@/api/courseApi'
 import UploadDialog from '@/components/resource/UploadDialog.vue'
@@ -118,6 +128,14 @@ function statusType(s) {
 }
 function statusLabel(s) {
   return { pending: '待审核', approved: '已通过', rejected: '已驳回' }[s] || s
+}
+function visibleType(row) {
+  if (row.is_visible === 0) return 'danger'
+  return row.status === 'approved' ? 'success' : 'warning'
+}
+function visibleLabel(row) {
+  if (row.is_visible === 0) return '已下架'
+  return { pending: '待审核', approved: '已上架', rejected: '已驳回' }[row.status] || row.status
 }
 
 async function loadResources() {
@@ -171,6 +189,22 @@ async function handleDelete(row) {
   try {
     await deleteResource(row.id)
     ElMessage.success('删除成功')
+    loadResources()
+  } catch {}
+}
+
+async function handleUnpublish(row) {
+  try {
+    await unpublishResource(row.id)
+    ElMessage.success('已下架')
+    loadResources()
+  } catch {}
+}
+
+async function handleRepublish(row) {
+  try {
+    await republishResource(row.id)
+    ElMessage.success('已重新上架')
     loadResources()
   } catch {}
 }

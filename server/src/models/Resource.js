@@ -54,7 +54,7 @@ class Resource {
     page = 1, pageSize = 20, search = '', category_id = '',
     file_type = '', sort = 'created_at', order = 'desc', course_id = ''
   } = {}) {
-    const conditions = ["r.status = 'approved'"];
+    const conditions = ["r.status = 'approved'", "r.is_visible = 1"];
     const params = [];
 
     if (search) {
@@ -212,6 +212,27 @@ class Resource {
   }
 
   /**
+   * Unpublish resource (set is_visible = 0)
+   * Resources become hidden from student view but remain in database
+   * @param {number} id
+   * @returns {Object} Updated resource
+   */
+  static unpublish(id) {
+    execute("UPDATE resources SET is_visible = 0, updated_at = datetime('now', 'localtime') WHERE id = ?", [id]);
+    return this.findById(id);
+  }
+
+  /**
+   * Republish resource (set is_visible = 1)
+   * @param {number} id
+   * @returns {Object} Updated resource
+   */
+  static republish(id) {
+    execute("UPDATE resources SET is_visible = 1, updated_at = datetime('now', 'localtime') WHERE id = ?", [id]);
+    return this.findById(id);
+  }
+
+  /**
    * Delete resource (with download logs)
    * @param {number} id
    * @returns {Object|null} The deleted resource info (for file cleanup)
@@ -232,12 +253,14 @@ class Resource {
     const total = queryOne('SELECT COUNT(*) as count FROM resources');
     const approved = queryOne("SELECT COUNT(*) as count FROM resources WHERE status = 'approved'");
     const pending = queryOne("SELECT COUNT(*) as count FROM resources WHERE status = 'pending'");
+    const hidden = queryOne("SELECT COUNT(*) as count FROM resources WHERE status = 'approved' AND is_visible = 0");
     const totalDownloads = queryOne('SELECT COALESCE(SUM(download_count), 0) as count FROM resources');
     const totalSize = queryOne("SELECT COALESCE(SUM(file_size), 0) as total FROM resources WHERE status = 'approved'");
     return {
       total: total.count,
       approved: approved.count,
       pending: pending.count,
+      hidden: hidden.count,
       totalDownloads: totalDownloads.count,
       totalSizeBytes: totalSize.total,
     };
