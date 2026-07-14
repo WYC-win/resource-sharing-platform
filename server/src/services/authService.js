@@ -173,6 +173,14 @@ function validateStudentId(id) {
     return { valid: false, message: '学号错误' };
   }
 
+  // Positions 5-6: enrollment year (limited to current year and past 4 years)
+  const enrollmentYear = parseInt(id.substring(4, 6), 10);
+  const currentYear = new Date().getFullYear() % 100;
+  const minYear = currentYear - 4;
+  if (enrollmentYear < minYear || enrollmentYear > currentYear) {
+    return { valid: false, message: '学号错误' };
+  }
+
   return { valid: true };
 }
 
