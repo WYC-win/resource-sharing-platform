@@ -13,9 +13,12 @@
       <div class="header-right">
         <template v-if="authStore.isLoggedIn">
           <!-- Announcement button -->
-          <el-badge :is-dot="hasNewAnnouncement" style="line-height:1">
-            <el-button text :icon="'Bell'" @click="showAnnouncements" style="font-size:18px;padding:6px" />
-          </el-badge>
+          <span style="display:inline-flex;align-items:center;gap:4px;cursor:pointer" @click="showAnnouncements">
+            <el-badge :is-dot="hasNewAnnouncement" style="line-height:1">
+              <el-button text :icon="'Bell'" style="font-size:18px;padding:6px" />
+            </el-badge>
+            <span style="font-size:13px;color:#606266;user-select:none">公告</span>
+          </span>
 
           <el-dropdown trigger="click" @command="handleCommand">
             <span class="user-info">
