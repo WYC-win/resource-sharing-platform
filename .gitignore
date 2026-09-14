@@ -7,3 +7,11 @@ dist/
 .DS_Store
 *.log
 北地书阁项目全档.md
+
+# 环境变量备份
+.env*.bak
+
+# 本地运维脚本（内含明文管理员口令，不入库）
+server/scripts/change-pw.js
+server/scripts/check-pw.js
+server/upwd.js
