@@ -63,7 +63,7 @@
           {{ detailRow.description || '暂无描述' }}
         </p>
         <div style="display:flex;gap:12px">
-          <el-button :icon="'View'" @click="previewFile(detailRow)">在线预览</el-button>
+          <el-button :icon="'View'" @click="previewFile(detailRow)" v-if="detailRow.file_type === 'pdf'">在线预览</el-button>
           <el-button :icon="'Download'" @click="downloadFile(detailRow)">下载文件</el-button>
         </div>
       </template>

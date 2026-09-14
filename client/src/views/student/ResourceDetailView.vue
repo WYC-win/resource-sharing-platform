@@ -59,7 +59,7 @@
           {{ resource.status === 'approved' ? '下载文件' : '暂不可下载' }}
         </el-button>
         <el-button
-          v-if="resource.status === 'approved'"
+          v-if="resource.status === 'approved' && resource.file_type === 'pdf'"
           size="large"
           :icon="'View'"
           @click="handlePreview"

@@ -80,7 +80,7 @@
         </el-form-item>
         <el-form-item label="文件">
           <div style="display:flex;gap:8px">
-            <el-button size="small" @click="previewFile(editRow)">预览</el-button>
+            <el-button size="small" @click="previewFile(editRow)" v-if="editRow.file_type === 'pdf'">预览</el-button>
             <el-button size="small" @click="downloadFile(editRow)">下载</el-button>
           </div>
         </el-form-item>

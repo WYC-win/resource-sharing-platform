@@ -49,7 +49,7 @@
           </div>
           <div v-if="item.description" class="ma-item-desc">{{ item.description }}</div>
           <div class="ma-item-actions">
-            <el-button size="small" text @click="showPreview(item)">预览</el-button>
+            <el-button size="small" text @click="showPreview(item)" v-if="item.file_type === 'pdf'">预览</el-button>
             <div style="flex:1" />
             <el-button size="small" type="danger" plain @click="rejectItem(item)">驳回</el-button>
             <el-button size="small" type="success" @click="approveItem(item)">通过</el-button>

@@ -374,7 +374,7 @@ router.get('/:id/preview', (req, res) => {
   }
 
   // Office docs - convert to PDF using LibreOffice, then serve inline
-  const officeTypes = ['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'];
+  const officeTypes = []; // N1不支持LibreOffice转PDF,直接改为下载
   if (officeTypes.includes(ft)) {
     // Cache dir for preview PDFs
     const cacheDir = path.join(path.dirname(filePath), '..', 'preview_cache');
