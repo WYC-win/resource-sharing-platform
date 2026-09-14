@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { isTokenExpired } from '@/utils/jwt'
 
 const routes = [
   {
@@ -113,6 +114,20 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
   if (to.meta.requiresAuth && !authStore.isLoggedIn) {
+    next({ path: '/login', query: { redirect: to.fullPath } })
+    return
+  }
+
+  // If the access token is expired AND the refresh token is also invalid,
+  // log out immediately and go to login. Otherwise the user would land on
+  // the main page with stale credentials: no login screen, disclaimer popup
+  // and an empty (0-course) list because every API call returns 401.
+  if (
+    to.meta.requiresAuth &&
+    isTokenExpired(authStore.token) &&
+    !(authStore.refreshTokenValue && !isTokenExpired(authStore.refreshTokenValue))
+  ) {
+    authStore.logout()
     next({ path: '/login', query: { redirect: to.fullPath } })
     return
   }
