@@ -31,6 +31,7 @@
       <el-button
         type="primary"
         :disabled="countdown > 0"
+        :loading="accepting"
         @click="acceptDisclaimer"
         style="min-width:160px"
       >
@@ -44,17 +45,23 @@
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import { useAuthStore } from '@/stores/authStore'
 import * as authApi from '@/api/authApi'
+import { isTokenExpired } from '@/utils/jwt'
 
 const route = useRoute()
 const authStore = useAuthStore()
 
 const showDisclaimer = ref(false)
 const countdown = ref(5)
+const accepting = ref(false)
 let timer = null
+
+// 强制阅读时长（秒）
+const DISCLAIMER_SECONDS = 5
 
 const layout = computed(() => {
   if (route.meta.layout === 'none') return 'div'
@@ -62,47 +69,65 @@ const layout = computed(() => {
   return DefaultLayout
 })
 
+// 打开弹窗并开始倒计时。已经在显示时直接返回，避免路由切换把倒计时重置。
+function openDisclaimer() {
+  if (showDisclaimer.value) return
+  countdown.value = DISCLAIMER_SECONDS
+  showDisclaimer.value = true
+  if (timer) clearInterval(timer)
+  timer = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      clearInterval(timer)
+      timer = null
+    }
+  }, 1000)
+}
+
+function closeDisclaimer() {
+  showDisclaimer.value = false
+  if (timer) { clearInterval(timer); timer = null; }
+}
+
+/**
+ * 是否需要强制弹出免责声明。
+ * 规则：普通学生只要从未同意过就弹一次；同意一次后永久不再弹。
+ */
 function checkDisclaimer() {
   if (!authStore.isLoggedIn || authStore.isAdmin) return false
-  const lastAccepted = authStore.user?.disclaimer_accepted_at
-  if (!lastAccepted) {
-    showDisclaimer.value = true
-    countdown.value = 5
-    if (timer) clearInterval(timer)
-    timer = setInterval(() => {
-      countdown.value--
-      if (countdown.value <= 0) {
-        clearInterval(timer)
-        timer = null
-      }
-    }, 1000)
-    return true
-  }
-  // Days since last acceptance
-  const daysSince = (Date.now() - new Date(lastAccepted).getTime()) / 86400000
-  if (daysSince > 30) {
-    showDisclaimer.value = true
-    countdown.value = 5
-    if (timer) clearInterval(timer)
-    timer = setInterval(() => {
-      countdown.value--
-      if (countdown.value <= 0) {
-        clearInterval(timer)
-        timer = null
-      }
-    }, 1000)
-    return true
-  }
-  return false
+
+  // 两条令牌都失效时，登录其实已经作废（路由守卫会把人送回登录页），这里不弹。
+  // 只过期 access token 是可以自动刷新的，此时会话仍然有效，该弹。
+  const accessExpired = isTokenExpired(authStore.token)
+  const canRefresh = !!authStore.refreshTokenValue && !isTokenExpired(authStore.refreshTokenValue)
+  if (accessExpired && !canRefresh) return false
+
+  // 已有同意记录 → 永久不再弹
+  if (authStore.user?.disclaimer_accepted_at) return false
+
+  openDisclaimer()
+  return true
 }
 
 async function acceptDisclaimer() {
-  showDisclaimer.value = false
-  if (timer) { clearInterval(timer); timer = null; }
+  if (accepting.value) return
+  accepting.value = true
   try {
     await authApi.acceptDisclaimer()
-    authStore.user.disclaimer_accepted_at = new Date().toISOString()
-  } catch {}
+    // 关键修复：必须用 setUser 同时写入 Pinia 和 localStorage。
+    // 之前只改 authStore.user（内存），localStorage 里仍是 null，
+    // 刷新页面后 initFromStorage() 会把旧值读回来，导致弹窗反复出现。
+    authStore.setUser({
+      ...authStore.user,
+      disclaimer_accepted_at: new Date().toISOString(),
+    })
+    closeDisclaimer()
+  } catch (err) {
+    // 不能静默失败：没存上就保留弹窗，提示用户重试
+    ElMessage.error('保存失败，请检查网络后重试')
+  } finally {
+    accepting.value = false
+  }
 }
 
 // Check after login navigation completes
@@ -114,17 +139,29 @@ watch(() => route.path, () => {
 
 // Also check when login state changes
 watch(() => authStore.isLoggedIn, (val) => {
-  if (val && route.path !== '/login') {
+  if (!val) {
+    // Logged out (e.g. token refresh failed and we were redirected to login):
+    // make sure a stale disclaimer dialog is not left hanging on the login page.
+    closeDisclaimer()
+    return
+  }
+  if (route.path !== '/login') {
     nextTick(() => checkDisclaimer())
   }
 })
 
-// Check on mount (e.g. page refresh)
-onMounted(() => {
-  nextTick(() => {
-    if (authStore.isLoggedIn && route.path !== '/login') {
-      checkDisclaimer()
-    }
-  })
+// Check on mount (e.g. page refresh).
+// 先从服务端拉一次最新资料覆盖本地缓存，再判断要不要弹：
+// 这样即使用户换了设备、清了浏览器缓存，只要数据库里有同意记录就不会重复弹。
+onMounted(async () => {
+  if (!authStore.isLoggedIn || route.path === '/login') return
+  try {
+    const res = await authApi.getProfile()
+    if (res?.data) authStore.setUser(res.data)
+  } catch (err) {
+    // 拉取失败就退回本地缓存判断，不阻塞页面
+  }
+  if (!authStore.isLoggedIn) return
+  nextTick(() => checkDisclaimer())
 })
 </script>

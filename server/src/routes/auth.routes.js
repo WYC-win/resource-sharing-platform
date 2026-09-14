@@ -103,10 +103,15 @@ router.get('/profile', auth, (req, res) => {
 
 /**
  * POST /api/v1/auth/disclaimer
- * Record that the user has accepted the disclaimer
+ * Record that the user has accepted the disclaimer.
+ * 只在首次同意时写入，保留"首次同意时间"；已同意过的调用不覆盖，
+ * 这样重复点击或换设备重新同意都不会冲掉原始记录。
  */
 router.post('/disclaimer', auth, (req, res) => {
-  execute("UPDATE users SET disclaimer_accepted_at = datetime('now', 'localtime') WHERE id = ?", [req.user.id]);
+  execute(
+    "UPDATE users SET disclaimer_accepted_at = datetime('now', 'localtime') WHERE id = ? AND disclaimer_accepted_at IS NULL",
+    [req.user.id]
+  );
   res.json({ code: 200, message: 'success', data: null });
 });
 
