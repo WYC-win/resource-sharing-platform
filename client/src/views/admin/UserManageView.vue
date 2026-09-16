@@ -42,10 +42,10 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="created_at" label="创建时间" width="170" />
-      <el-table-column label="最近登录" width="170">
+      <el-table-column prop="created_at" label="注册时间" width="170" />
+      <el-table-column label="最近访问时间" width="170">
         <template #default="{ row }">
-          {{ row.last_login_at || '从未登录' }}
+          {{ row.last_visit || '从未访问' }}
         </template>
       </el-table-column>
       <el-table-column label="操作" width="200" fixed="right">

@@ -71,6 +71,30 @@ class User {
       [...params, pageSize, offset]
     );
 
+    // 附上「最近访问时间」。
+    // last_login_at 只在调用登录接口时刷新，而学生登录一次后 token 存在浏览器里，
+    // 之后再进站直接带 token、不会再走登录接口，所以该字段会一直停在第一次登录。
+    // 真正的访问时间在 visit_logs（app.js 里每个 /api/ 请求都会记一条，同 IP 60 秒去重）。
+    // 这里取「访问记录」与「最后登录」中更晚的那个——登录本身也算一次访问。
+    if (users.length > 0) {
+      const ids = users.map((u) => u.id);
+      const visitMap = {};
+      queryAll(
+        `SELECT user_id, MAX(visited_at) AS last_visit
+         FROM visit_logs
+         WHERE user_id IN (${ids.map(() => '?').join(',')})
+         GROUP BY user_id`,
+        ids
+      ).forEach((r) => { visitMap[r.user_id] = r.last_visit; });
+
+      users.forEach((u) => {
+        const v = visitMap[u.id];
+        u.last_visit = (v && (!u.last_login_at || v > u.last_login_at))
+          ? v
+          : (u.last_login_at || null);
+      });
+    }
+
     return { users, total };
   }
 
