@@ -165,10 +165,14 @@ router.post('/', auth, (req, res, next) => {
       const ext = path.extname(file.originalname).toLowerCase();
       const fileType = getFileType(ext);
 
+      // 同一课程内标题不重复：重名会自动追加 _1、_2……
+      const targetCourseId = course_id ? parseInt(course_id, 10) : null;
+      const uniqueTitle = Resource.uniqueTitle(title, targetCourseId);
+
       const resource = Resource.create({
-        title,
+        title: uniqueTitle,
         description: description || null,
-        course_id: course_id ? parseInt(course_id, 10) : null,
+        course_id: targetCourseId,
         category_id: parseInt(category_id, 10),
         file_name: file.originalname,
         file_path: file.path,
@@ -223,7 +227,7 @@ router.get('/:id', auth, (req, res) => {
 router.post('/:id/review', auth, adminOnly, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const { status, review_note } = req.body;
+    const { status, review_note, course_id } = req.body;
 
     if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({
@@ -266,13 +270,22 @@ router.post('/:id/review', auth, adminOnly, async (req, res) => {
     }
 
     // Update resource record
-    const updated = Resource.update(id, {
+    // 上架前最后一道关口：确保同一课程内标题不重复（重名追加 _1、_2……）
+    const finalCourseId = course_id !== undefined
+      ? (course_id === '' || course_id === null ? null : parseInt(course_id, 10))
+      : resource.course_id;
+
+    const updatePayload = {
       status,
       review_note: review_note || null,
       reviewed_by: req.user.id,
       reviewed_at: new Date().toISOString(),
       file_path: newPath,
-    });
+      title: Resource.uniqueTitle(resource.title, finalCourseId, id),
+    };
+    if (course_id !== undefined) updatePayload.course_id = finalCourseId;
+
+    const updated = Resource.update(id, updatePayload);
 
     const statusLabel = status === 'approved' ? '审核通过' : '已驳回';
     res.json({
@@ -594,11 +607,21 @@ router.put('/:id', auth, (req, res) => {
     return res.status(400).json({ code: 400, message: '已审核资源不可修改', data: null });
   }
 
-  const { title, description, category_id } = req.body;
+  const { title, description, category_id, course_id } = req.body;
   const updates = {};
-  if (title !== undefined) updates.title = title;
   if (description !== undefined) updates.description = description;
   if (category_id !== undefined) updates.category_id = parseInt(category_id, 10);
+
+  // 标题或所属课程发生变化时，重新保证「同一课程内不重名」
+  // （course_id 此前不在接收范围内，导致审核弹窗里选的课程被静默丢弃）
+  if (title !== undefined || course_id !== undefined) {
+    const nextCourseId = course_id !== undefined
+      ? (course_id === '' || course_id === null ? null : parseInt(course_id, 10))
+      : resource.course_id;
+    const nextTitle = title !== undefined ? title : resource.title;
+    updates.title = Resource.uniqueTitle(nextTitle, nextCourseId, id);
+    if (course_id !== undefined) updates.course_id = nextCourseId;
+  }
 
   const updated = Resource.update(id, updates);
   res.json({ code: 200, message: '修改成功', data: updated });

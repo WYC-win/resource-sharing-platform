@@ -177,6 +177,44 @@ class Resource {
   }
 
   /**
+   * 保证同一门课程下资源标题不重复。
+   *
+   * 重名时在标题后追加 `_1`、`_2`……（从小到大取第一个没被占用的序号），
+   * 例如「岩石学复习资料」已存在时，新资源会变成「岩石学复习资料_1」。
+   *
+   * 比较范围：同一 course_id 下、状态不为 rejected 的资源（已驳回的不占名字）。
+   * course_id 为空时，与其它「未指定课程」的资源比较。
+   *
+   * @param {string} baseTitle 原始标题
+   * @param {number|null} courseId 所属课程
+   * @param {number|null} excludeId 排除自身（编辑已有资源时传入）
+   * @returns {string} 可用的标题
+   */
+  static uniqueTitle(baseTitle, courseId, excludeId = null) {
+    if (!baseTitle) return baseTitle;
+
+    let sql = "SELECT title FROM resources WHERE status <> 'rejected'";
+    const params = [];
+    if (courseId === null || courseId === undefined || courseId === '') {
+      sql += ' AND course_id IS NULL';
+    } else {
+      sql += ' AND course_id = ?';
+      params.push(parseInt(courseId, 10));
+    }
+    if (excludeId) {
+      sql += ' AND id <> ?';
+      params.push(parseInt(excludeId, 10));
+    }
+
+    const taken = new Set(queryAll(sql, params).map((r) => r.title));
+    if (!taken.has(baseTitle)) return baseTitle;
+
+    let n = 1;
+    while (taken.has(`${baseTitle}_${n}`)) n += 1;
+    return `${baseTitle}_${n}`;
+  }
+
+  /**
    * Update resource
    * @param {number} id
    * @param {Object} updates
