@@ -165,14 +165,10 @@ router.post('/', auth, (req, res, next) => {
       const ext = path.extname(file.originalname).toLowerCase();
       const fileType = getFileType(ext);
 
-      // 同一课程内标题不重复：重名会自动追加 _1、_2……
-      const targetCourseId = course_id ? parseInt(course_id, 10) : null;
-      const uniqueTitle = Resource.uniqueTitle(title, targetCourseId);
-
       const resource = Resource.create({
-        title: uniqueTitle,
+        title,
         description: description || null,
-        course_id: targetCourseId,
+        course_id: course_id ? parseInt(course_id, 10) : null,
         category_id: parseInt(category_id, 10),
         file_name: file.originalname,
         file_path: file.path,
@@ -270,20 +266,19 @@ router.post('/:id/review', auth, adminOnly, async (req, res) => {
     }
 
     // Update resource record
-    // 上架前最后一道关口：确保同一课程内标题不重复（重名追加 _1、_2……）
-    const finalCourseId = course_id !== undefined
-      ? (course_id === '' || course_id === null ? null : parseInt(course_id, 10))
-      : resource.course_id;
-
     const updatePayload = {
       status,
       review_note: review_note || null,
       reviewed_by: req.user.id,
       reviewed_at: new Date().toISOString(),
       file_path: newPath,
-      title: Resource.uniqueTitle(resource.title, finalCourseId, id),
     };
-    if (course_id !== undefined) updatePayload.course_id = finalCourseId;
+    // 审核时也可一并指定所属课程（此前该字段不被接收，会被静默丢弃）
+    if (course_id !== undefined) {
+      updatePayload.course_id = (course_id === '' || course_id === null)
+        ? null
+        : parseInt(course_id, 10);
+    }
 
     const updated = Resource.update(id, updatePayload);
 
@@ -609,18 +604,14 @@ router.put('/:id', auth, (req, res) => {
 
   const { title, description, category_id, course_id } = req.body;
   const updates = {};
+  if (title !== undefined) updates.title = title;
   if (description !== undefined) updates.description = description;
   if (category_id !== undefined) updates.category_id = parseInt(category_id, 10);
-
-  // 标题或所属课程发生变化时，重新保证「同一课程内不重名」
-  // （course_id 此前不在接收范围内，导致审核弹窗里选的课程被静默丢弃）
-  if (title !== undefined || course_id !== undefined) {
-    const nextCourseId = course_id !== undefined
-      ? (course_id === '' || course_id === null ? null : parseInt(course_id, 10))
-      : resource.course_id;
-    const nextTitle = title !== undefined ? title : resource.title;
-    updates.title = Resource.uniqueTitle(nextTitle, nextCourseId, id);
-    if (course_id !== undefined) updates.course_id = nextCourseId;
+  // course_id 此前不在接收范围内，导致审核弹窗里选的课程被静默丢弃
+  if (course_id !== undefined) {
+    updates.course_id = (course_id === '' || course_id === null)
+      ? null
+      : parseInt(course_id, 10);
   }
 
   const updated = Resource.update(id, updates);
