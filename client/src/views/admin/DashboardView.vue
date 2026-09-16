@@ -54,15 +54,6 @@
           <el-icon :size="24"><Opportunity /></el-icon>
         </div>
         <div class="stat-info">
-          <h3>{{ stats.visits?.todayVisitors || 0 }}</h3>
-          <p>今日访问人数</p>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background:#f0f5ff;color:#667eea">
-          <el-icon :size="24"><Opportunity /></el-icon>
-        </div>
-        <div class="stat-info">
           <h3>{{ stats.visits?.total || 0 }}</h3>
           <p>总访问量（今日 {{ stats.visits?.today || 0 }}）</p>
         </div>

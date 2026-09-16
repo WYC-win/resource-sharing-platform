@@ -7,7 +7,25 @@
       </el-button>
     </div>
 
-    <el-table :data="users" stripe v-loading="loading">
+    <!-- Search -->
+    <div class="search-bar">
+      <el-input
+        v-model="search"
+        placeholder="搜索学号或姓名"
+        clearable
+        :prefix-icon="'Search'"
+        @keyup.enter="handleSearch"
+        @clear="handleSearch"
+      />
+      <el-button type="primary" @click="handleSearch">搜索</el-button>
+    </div>
+
+    <el-table
+      :data="users"
+      stripe
+      v-loading="loading"
+      :empty-text="search ? '未找到匹配「' + search + '」的用户' : '暂无用户数据'"
+    >
       <el-table-column prop="username" label="用户名" width="120" />
       <el-table-column prop="display_name" label="姓名" width="120" />
       <el-table-column prop="role" label="角色" width="80">
@@ -95,6 +113,7 @@ const creating = ref(false)
 const showCreate = ref(false)
 const page = ref(1)
 const total = ref(0)
+const search = ref('')
 const createFormRef = ref(null)
 
 const createForm = reactive({
@@ -114,7 +133,7 @@ const createRules = {
 async function loadUsers() {
   loading.value = true
   try {
-    const res = await getUsers({ page: page.value })
+    const res = await getUsers({ page: page.value, search: search.value })
     users.value = res.data
     total.value = res.meta?.total || 0
   } catch {
@@ -122,6 +141,12 @@ async function loadUsers() {
   } finally {
     loading.value = false
   }
+}
+
+// 搜索时回到第 1 页，避免停留在超出结果范围的页码上
+function handleSearch() {
+  page.value = 1
+  loadUsers()
 }
 
 async function handleCreate() {
