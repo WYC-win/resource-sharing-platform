@@ -480,6 +480,60 @@ function createThrottle(bytesPerSecond) {
 const downloadCache = new Map();
 
 /**
+ * 下载响应头修正（2026-09-18）
+ *
+ * 1) 不再相信库里的 mime_type。建站初期（2026-07-02/03）批量导入时，
+ *    100 个非 PDF 里有 81 个的 mime_type 被统一写成了 application/pdf。
+ *    下载时若原样当 Content-Type 发出去，等于告诉客户端"这是 PDF"：
+ *    桌面浏览器优先用 Content-Disposition 里的文件名，所以正常；
+ *    但平板 / Android 等客户端会按 Content-Type 补后缀，把 xxx.doc 存成
+ *    xxx.doc.pdf，于是打不开。file_type 与真实文件后缀 100% 一致，
+ *    所以统一按文件后缀推导，最可靠。
+ * 2) Content-Disposition 的 filename= 必须是 ASCII 兜底（RFC 6266），
+ *    真名放 filename*=UTF-8''…。原先两个字段都塞 URL 编码，
+ *    不用 filename*= 的客户端（Android / WebView 正是）会拿到
+ *    %E5%B2%A9 这样的乱码名。
+ */
+const DOWNLOAD_MIME = {
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pps: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+};
+
+// 真实文件后缀优先，其次退回 file_type
+function fileExtOf(resource) {
+  const byPath = path.extname(resource.file_path || '').slice(1).toLowerCase();
+  return byPath || (resource.file_type || '').toLowerCase();
+}
+
+function downloadMime(resource) {
+  return DOWNLOAD_MIME[fileExtOf(resource)] || 'application/octet-stream';
+}
+
+function downloadFileName(resource) {
+  const ext = fileExtOf(resource);
+  const base = String(resource.title || '').trim() || 'resource';
+  // 标题里万一已带同名后缀，别拼成 xxx.doc.docx
+  return ext && !base.toLowerCase().endsWith('.' + ext) ? `${base}.${ext}` : base;
+}
+
+function attachmentDisposition(filename) {
+  const ext = path.extname(filename) || '';
+  // ASCII 兜底：只保留字母/数字/._-，避免破坏 header 结构。
+  // 纯中文标题会被清空，这时统一退化成 resource.ext（扩展名一定是对的，
+  // 别留下 ".docx" 这种只有扩展名的名字，有客户端会存成隐藏文件）。
+  let asciiBase = filename.slice(0, filename.length - ext.length)
+    .replace(/[^A-Za-z0-9._\-]/g, '');
+  if (asciiBase.replace(/[^A-Za-z0-9]/g, '').length < 3) asciiBase = 'resource';
+  return `attachment; filename="${asciiBase}${ext}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+}
+
+/**
  * GET /api/v1/resources/:id/download
  * Download a resource
  */
@@ -536,13 +590,12 @@ router.get('/:id/download', (req, res) => {
   }
 
   // Send file with speed throttle (600KB/s per connection)
-  const dlName = resource.title + '.' + (resource.file_type || 'pdf');
-  const encodedName = encodeURIComponent(dlName);
-  res.setHeader('Content-Disposition', `attachment; filename="${encodedName}"; filename*=UTF-8''${encodedName}`);
+  const dlName = downloadFileName(resource);
+  res.setHeader('Content-Disposition', attachmentDisposition(dlName));
 
   const stat = fs.statSync(filePath);
   res.setHeader('Content-Length', stat.size);
-  res.setHeader('Content-Type', resource.mime_type || 'application/octet-stream');
+  res.setHeader('Content-Type', downloadMime(resource));
 
   const readStream = fs.createReadStream(filePath);
   const throttle = createThrottle(4 * 1024 * 1024); // 4MB/s
