@@ -90,8 +90,6 @@
       </div>
     </div>
     <div class="login-site-footer">
-      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">冀ICP备2026007969号-2</a>
-      <span class="footer-divider-desktop">|</span>
       <span class="desktop-emoji">🐚 </span>已运行 {{ runtime }}
     </div>
   </div>
@@ -276,17 +274,6 @@ async function handleAdminLogin() {
   font-size: 13px;
   color: rgba(255,255,255,0.7);
 }
-.login-site-footer a {
-  color: rgba(255,255,255,0.7);
-  text-decoration: none;
-}
-.login-site-footer a:hover {
-  color: rgba(255,255,255,0.9);
-}
-.footer-divider-desktop {
-  margin: 0 10px;
-  color: rgba(255,255,255,0.4);
-}
 
 /* Mobile */
 @media (max-width: 480px) {
@@ -307,9 +294,6 @@ async function handleAdminLogin() {
     flex-direction: column;
     gap: 2px;
     align-items: center;
-  }
-  .footer-divider-desktop {
-    display: none;
   }
   .desktop-emoji {
     display: none;

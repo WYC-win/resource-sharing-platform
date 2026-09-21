@@ -12,8 +12,6 @@
       </main>
     </div>
     <footer class="site-footer">
-      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">冀ICP备2026007969号-2</a>
-      <span class="footer-divider">|</span>
       <span>🐚 北地书阁已运行 {{ runtime }}</span>
     </footer>
   </div>
@@ -83,17 +81,6 @@ onUnmounted(() => {
   background: #fff;
   border-top: 1px solid #e4e7ed;
 }
-.site-footer a {
-  color: #909399;
-  text-decoration: none;
-}
-.site-footer a:hover {
-  color: #409eff;
-}
-.footer-divider {
-  margin: 0 10px;
-  color: #dcdfe6;
-}
 
 @media (max-width: 768px) {
   .admin-main {
@@ -118,9 +105,6 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 2px;
     align-items: center;
-  }
-  .footer-divider {
-    display: none;
   }
 }
 </style>
