@@ -22,6 +22,35 @@
 
 ---
 
+## 💻 桌面客户端
+
+不想每次开浏览器？Windows 上可以装个桌面客户端 —— **免安装单文件，双击即用**。
+
+<div align="center">
+
+### 👉 **[下载最新版](https://github.com/WYC-win/resource-sharing-platform/releases/latest)**
+
+**16 MB 单文件 · 免安装 · 登录一次后不用重复登录**
+
+</div>
+
+| 特点 | 说明 |
+|------|------|
+| **同一份数据** | 和网页版账号完全打通 —— 在哪个端上传、下载、收藏，另一边都同步 |
+| **能挑保存位置** | 每次下载都可以选存到哪，不用去翻浏览器的默认下载目录 |
+| **实时下载面板** | 右下角悬浮按钮，进度 / 速度 / 已下载大小一目了然，可直接取消、重试 |
+| **预览交给系统** | PDF 用系统默认阅读器打开，翻页、批注、打印都更顺手 |
+| **多任务并行** | 面板里可同时跟踪多个下载 |
+| **不会开出好几个窗口** | 重复双击只会激活已经打开的那个 |
+
+**系统要求**：Windows 10 / 11，需要 [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)
+（Win10/11 基本都预装；若提示缺失，按链接装一下即可）。
+
+> 客户端只是个「外壳」：数据全部在服务器上，它不保存任何业务数据。
+> 源码在 [`cugbshare-desktop/`](cugbshare-desktop)，基于 pywebview + 系统 WebView2，**不打包自己的 Chromium**，所以只有 16 MB。
+
+---
+
 ## ✨ 这是什么
 
 每年期末，复习资料散落在各个班级群里 —— 有人手里有往年真题，有人有学长整理的笔记，但更多的人什么都拿不到。
@@ -95,12 +124,13 @@
 |------|------|
 | 后端 | Node.js + Express |
 | 前端 | Vue 3 + Element Plus + Vite |
+| 桌面客户端 | Python + pywebview（复用系统 WebView2，不打包 Chromium） |
 | 数据库 | SQLite（sql.js，WAL 模式） |
 | 认证 | JWT（Access Token + Refresh Token） |
 | 部署 | Nginx + PM2 |
 | CDN / HTTPS | Cloudflare |
 
-**为低配服务器优化**：整套服务跑在一台 2C2G 的小机器上，堆内存限制 256MB、PM2 超 300MB 自动重启、SQLite WAL 读写不互斥、Nginx Gzip + 静态资源长缓存、下载限速 600KB/s 防止带宽被单个用户吃满。
+**为低配服务器优化**：整套服务跑在一台 2C2G 的小机器上，堆内存限制 256MB、PM2 超 300MB 自动重启、SQLite WAL 读写不互斥、Nginx Gzip + 静态资源长缓存、下载限速 4MB/s 防止带宽被单个用户吃满。
 
 ---
 
