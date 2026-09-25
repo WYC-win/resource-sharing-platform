@@ -171,8 +171,15 @@ resource-sharing-platform/
 │   ├── nginx.conf
 │   ├── ecosystem.config.js
 │   └── setup.sh
-└── mp/                        # 已废弃的微信小程序端（uni-app），不再维护
+└── cugbshare-desktop/         # Windows 桌面客户端（pywebview + WebView2）
+    ├── app.py                 #   主程序：窗口、下载引擎、JS 桥
+    ├── ui.js                  #   注入到页面的下载管理面板
+    ├── build.py               #   PyInstaller 打包脚本
+    └── README.md              #   用法与排查
 ```
+
+> 原微信小程序端（`mp/`，uni-app）已于 2026-09-25 移除，不再维护；
+> 源码在 git 历史里（`git log -- mp` 可查）。
 
 ## 🔌 API 概览
 
